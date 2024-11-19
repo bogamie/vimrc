@@ -60,6 +60,7 @@ set smarttab                  " 스마트 탭
 set laststatus=0              " 상태바 항상 표시
 set cindent                   " C 스타일 자동 들여쓰기
 set hlsearch                  " 검색 결과 강조
+set completeopt-=preview      " 자동 완성 시 미리보기 비활성화
 
 " 마지막으로 수정된 곳에 커서를 위치함
 au BufReadPost *
@@ -147,5 +148,11 @@ nnoremap <leader>gl :Gpull<CR>
 
 " YouCompleteMe 설정 (자동 완성)
 let g:ycm_global_ycm_extra_conf = '~/.vim/.ycm_extra_conf.py'
+let g:ycm_show_diagnostics_ui = 0
 let g:ycm_confirm_extra_conf = 0
 let g:ycm_min_num_of_chars_for_completion = 1
+let g:ycm_add_preview_to_completeopt = 0
+
+" Cursor 모양 설정
+let &t_SI = "\<ESC>[5 q"
+let &t_EI = "\<ESC>[2 q"
