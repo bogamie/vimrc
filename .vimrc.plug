@@ -1,0 +1,176 @@
+set nocompatible
+filetype off
+
+" vim-plug 부트스트랩
+let s:plug_path = expand('~/.vim/autoload/plug.vim')
+if empty(glob(s:plug_path))
+  silent execute '!curl -fLo ' . s:plug_path . ' --create-dirs '
+    \ . 'https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim'
+  autocmd VimEnter * PlugInstall --sync | source $MYVIMRC
+endif
+
+" --- 플러그인 ---
+call plug#begin('~/.vim/plugged')
+
+Plug 'preservim/nerdtree'
+Plug 'ryanoasis/vim-devicons'
+Plug 'tiagofumo/vim-nerdtree-syntax-highlight'
+Plug 'tpope/vim-fugitive'
+Plug 'sheerun/vim-polyglot'
+Plug 'junegunn/fzf', { 'do': { -> fzf#install() } }
+Plug 'junegunn/fzf.vim'
+Plug 'tpope/vim-surround'
+Plug 'jiangmiao/auto-pairs'
+Plug 'neoclide/coc.nvim', { 'branch': 'release' }
+
+call plug#end()
+
+filetype plugin indent on
+syntax on
+
+
+" --- 편집 ---
+set number
+set clipboard=unnamedplus
+set hidden
+set hlsearch
+set completeopt-=preview
+
+set tabstop=4
+set shiftwidth=4
+set expandtab
+set smarttab
+set autoindent
+set cindent
+
+" 마지막 편집 위치로 커서 복원
+augroup RestoreCursor
+  autocmd!
+  autocmd BufReadPost *
+    \ if line("'\"") > 0 && line("'\"") <= line("$") |
+    \   exe "norm g`\"" |
+    \ endif
+augroup END
+
+
+" --- 키 매핑 ---
+inoremap <C-h> <Left>
+inoremap <C-j> <Down>
+inoremap <C-k> <Up>
+inoremap <C-l> <Right>
+cnoremap <C-h> <Left>
+cnoremap <C-j> <Down>
+cnoremap <C-k> <Up>
+cnoremap <C-l> <Right>
+
+nmap     <leader>T  :enew<CR>
+nmap     <leader>l  :bnext<CR>
+nmap     <leader>h  :bprevious<CR>
+nmap     <leader>bq :bp <BAR> bd #<CR>
+nmap     <leader>bl :ls<CR>
+nnoremap <Tab>      :bnext<CR>
+nnoremap <S-Tab>    :bprevious<CR>
+
+
+" --- 색상 ---
+set t_Co=256
+set t_ut=                     " tmux/투명 배경 깨짐 방지
+colorscheme habamax
+
+highlight Normal      ctermbg=NONE guibg=NONE
+highlight NonText     ctermbg=NONE guibg=NONE
+highlight LineNr      ctermbg=NONE guibg=NONE
+highlight SignColumn  ctermbg=NONE guibg=NONE
+highlight EndOfBuffer ctermbg=NONE guibg=NONE
+
+set fillchars+=vert:│
+highlight VertSplit ctermbg=NONE guibg=NONE
+
+
+" --- 상단 버퍼 탭라인 ---
+set laststatus=0              " 하단 상태바 대신 상단 탭라인 사용
+
+function! BufferTabline() abort
+  let s = ''
+  for b in range(1, bufnr('$'))
+    if !buflisted(b) | continue | endif
+    let name = bufname(b)
+    let name = empty(name) ? '[No Name]' : fnamemodify(name, ':t')
+    let mod  = getbufvar(b, '&modified') ? ' +' : ''
+    let hl   = (b == bufnr('%')) ? '%#TabLineSel#' : '%#TabLine#'
+    let s .= hl . ' ' . name . mod . ' '
+  endfor
+  return s . '%#TabLineFill#'
+endfunction
+set tabline=%!BufferTabline()
+
+highlight TabLine     ctermfg=244 ctermbg=NONE guifg=#808080 guibg=NONE
+highlight TabLineSel  ctermfg=255 ctermbg=235 guifg=#eeeeee guibg=#262626
+highlight TabLineFill ctermbg=NONE guibg=NONE
+
+" 버퍼 2개 이상일 때만 표시
+function! s:UpdateBufferBar(...) abort
+  let skip = get(a:, 1, -1)
+  let n = 0
+  for b in range(1, bufnr('$'))
+    if b == skip | continue | endif
+    if buflisted(b) | let n += 1 | endif
+  endfor
+  let &showtabline = (n >= 2) ? 2 : 0
+endfunction
+augroup AutoBufferBar
+  autocmd!
+  autocmd VimEnter,BufAdd,BufWinEnter * call s:UpdateBufferBar()
+  autocmd BufDelete * call s:UpdateBufferBar(str2nr(expand('<abuf>')))
+augroup END
+
+
+" --- 커서 모양 (입력: 막대, 노멀: 블록) ---
+let &t_SI = "\<ESC>[5 q"
+let &t_EI = "\<ESC>[2 q"
+
+
+" --- NERDTree ---
+nnoremap <F2> :NERDTreeToggle<CR>
+autocmd VimEnter * NERDTree
+let g:NERDTreeDirArrowExpandable  = '+'
+let g:NERDTreeDirArrowCollapsible = '-'
+let g:webdevicons_enable          = 1
+let g:webdevicons_enable_nerdtree = 1
+
+
+" --- FZF ---
+nnoremap <C-p> :Files<CR>
+
+
+" --- vim-fugitive ---
+nnoremap <leader>gs :Git<CR>
+nnoremap <leader>gc :Git commit<CR>
+nnoremap <leader>gp :Git push<CR>
+nnoremap <leader>gl :Git pull<CR>
+
+
+" --- coc.nvim ---
+set signcolumn=number         " sign 을 줄번호 칸에 표시 (별도 컬럼 안 씀)
+set updatetime=300            " 진단 반응성
+
+nmap <silent> K   :call CocActionAsync('doHover')<CR>
+nmap <silent> gd  <Plug>(coc-definition)
+nmap <silent> gr  <Plug>(coc-references)
+nmap <silent> gi  <Plug>(coc-implementation)
+nmap <silent> [d  <Plug>(coc-diagnostic-prev)
+nmap <silent> ]d  <Plug>(coc-diagnostic-next)
+nmap <leader>rn  <Plug>(coc-rename)
+
+" Tab/S-Tab 선택, Enter 확정
+inoremap <silent><expr> <Tab>
+      \ coc#pum#visible() ? coc#pum#next(1) :
+      \ <SID>check_back_space() ? "\<Tab>" :
+      \ coc#refresh()
+inoremap <expr><S-Tab> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
+inoremap <silent><expr> <CR> coc#pum#visible() ? coc#pum#confirm() : "\<C-g>u\<CR>"
+
+function! s:check_back_space() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~# '\s'
+endfunction
